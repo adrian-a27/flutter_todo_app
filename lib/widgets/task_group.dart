@@ -2,16 +2,14 @@ import "package:flutter/material.dart";
 import 'task.dart';
 
 class TaskGroup extends StatelessWidget {
+  final String heading;
+  final List<Task> tasks;
+
   const TaskGroup({
     super.key,
     required this.heading,
     required this.tasks,
   });
-
-  final String heading;
-
-  // TODO: Figure out type
-  final List<String> tasks;
 
   @override
   Widget build(BuildContext context) {
@@ -22,13 +20,14 @@ class TaskGroup extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                  child: Text(heading,
-                      style: Theme.of(context).textTheme.headlineSmall)),
+                child: Text(heading,
+                    style: Theme.of(context).textTheme.headlineSmall),
+              ),
               Text(tasks.length.toString(),
                   style: Theme.of(context).textTheme.headlineSmall)
             ],
           ),
-          for (var task in tasks) Task(name: task)
+          for (Task task in tasks) task
         ],
       ),
     );
