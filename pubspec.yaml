@@ -8,11 +8,15 @@ environment:
 
 dependencies:
     dynamic_color: ^1.6.6
+    extension_google_sign_in_as_googleapis_auth: ^2.0.10
+    firebase_core: ^2.15.1
     flutter:
         sdk: flutter
     flutter_adaptive_scaffold: ^0.1.6
     google_fonts: ^5.1.0
+    google_sign_in: ^6.1.4
     googleapis: ^11.4.0
+    googleapis_auth: ^1.4.1
 
 
 dev_dependencies:
