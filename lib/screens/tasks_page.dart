@@ -3,7 +3,13 @@ import '../widgets/page_header.dart';
 import '../widgets/task_group.dart';
 import '../widgets/task.dart';
 
-class TasksPage extends StatelessWidget {
+class TasksPage extends StatefulWidget {
+  @override
+  State<TasksPage> createState() => _TasksPageState();
+}
+
+class _TasksPageState extends State<TasksPage>
+    with AutomaticKeepAliveClientMixin {
   final taskGroups = [
     TaskGroup(heading: "Today", tasks: [
       Task(name: "This is a task"),
@@ -17,7 +23,12 @@ class TasksPage extends StatelessWidget {
   ];
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     return Column(
       children: [
         PageHeader(

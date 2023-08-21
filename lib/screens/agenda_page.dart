@@ -15,8 +15,12 @@ class AgendaPage extends StatefulWidget {
   State<AgendaPage> createState() => _AgendaPageState();
 }
 
-class _AgendaPageState extends State<AgendaPage> {
+class _AgendaPageState extends State<AgendaPage>
+    with AutomaticKeepAliveClientMixin {
   late Future<List<gcal.Event>> _eventList;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -34,6 +38,8 @@ class _AgendaPageState extends State<AgendaPage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     return Column(
       children: [
         PageHeader(

@@ -53,7 +53,6 @@ class TodoApp extends StatelessWidget {
             useMaterial3: true,
             fontFamily: GoogleFonts.lexendDeca().fontFamily,
             colorScheme: darkColorScheme),
-        themeMode: ThemeMode.light,
         home: PrimaryBody(),
         debugShowCheckedModeBanner: false,
       );
@@ -68,31 +67,11 @@ class PrimaryBody extends StatefulWidget {
 
 class _PrimaryBodyState extends State<PrimaryBody> {
   int selectedIndex = 1;
+  final PageController controller = PageController(initialPage: 1);
+  final pages = [AgendaPage(), TasksPage(), CalendarPage(), Placeholder()];
 
   @override
   Widget build(BuildContext context) {
-    Widget page;
-    switch (selectedIndex) {
-      case 0:
-        page = AgendaPage();
-        break;
-
-      case 1:
-        page = TasksPage();
-        break;
-
-      case 2:
-        page = CalendarPage();
-        break;
-
-      case 3:
-        page = Placeholder();
-        break;
-
-      default:
-        throw UnimplementedError('no widget for $selectedIndex');
-    }
-
     return AdaptiveScaffold(
       destinations: [
         NavigationDestination(
@@ -112,19 +91,25 @@ class _PrimaryBodyState extends State<PrimaryBody> {
             selectedIcon: Icon(Icons.settings),
             label: 'Settings')
       ],
-      onSelectedIndexChange: (value) {
+      onSelectedIndexChange: (index) {
+        controller.jumpToPage(index);
         setState(() {
-          selectedIndex = value;
+          selectedIndex = index;
         });
       },
       selectedIndex: selectedIndex,
       internalAnimations: false,
       body: (_) => SafeArea(
         child: Container(
-          padding: EdgeInsets.all(20),
-          color: Theme.of(context).colorScheme.surface,
-          child: page,
-        ),
+            padding: EdgeInsets.all(20),
+            color: Theme.of(context).colorScheme.surface,
+            child: PageView(
+              controller: controller,
+              children: pages,
+              onPageChanged: (index) {
+                selectedIndex = index;
+              },
+            )),
       ),
       useDrawer: false,
     );
