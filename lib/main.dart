@@ -2,41 +2,27 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_adaptive_scaffold/flutter_adaptive_scaffold.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'providers/auth_manager.dart';
 import 'screens/tasks_page.dart';
 import 'screens/agenda_page.dart';
 import 'screens/calendar_page.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:googleapis/calendar/v3.dart' as calendar;
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-
-const List<String> scopes = [calendar.CalendarApi.calendarEventsScope];
-GoogleSignIn _googleSignIn = GoogleSignIn(scopes: scopes);
-
-Future<void> _handleSignIn() async {
-  try {
-    await _googleSignIn.signIn();
-  } catch (error) {
-    print(error);
-  }
-}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
 
-  await _handleSignIn();
-  print("Sign in complete.");
+  final authManager = await AuthManager.create();
 
-  runApp(TodoApp());
+  runApp(Provider.value(
+    value: authManager,
+    child: TodoApp(),
+  ));
 }
 
 class TodoApp extends StatelessWidget {
   TodoApp({super.key});
 
-  final mainColor = Colors.indigo;
+  final mainColor = Colors.deepPurple;
 
   @override
   Widget build(BuildContext context) {
@@ -46,18 +32,15 @@ class TodoApp extends StatelessWidget {
       ColorScheme darkColorScheme;
 
       if (lightDynamic != null && darkDynamic != null) {
-        // On Android S+ devices, use the provided dynamic color scheme.
-        // (Recommended) Harmonize the dynamic color scheme' built-in semantic colors.
+        // Used if platform supports dynamic color
         lightColorScheme = lightDynamic.harmonized();
-
-        // Repeat for the dark color scheme.
         darkColorScheme = darkDynamic.harmonized();
       } else {
-        // Otherwise, use fallback schemes.
+        // Used as a fallback
         lightColorScheme = ColorScheme.fromSeed(
             seedColor: mainColor, brightness: Brightness.light);
         darkColorScheme = ColorScheme.fromSeed(
-            seedColor: mainColor, brightness: Brightness.light);
+            seedColor: mainColor, brightness: Brightness.dark);
       }
 
       return MaterialApp(
@@ -70,7 +53,7 @@ class TodoApp extends StatelessWidget {
             useMaterial3: true,
             fontFamily: GoogleFonts.lexendDeca().fontFamily,
             colorScheme: darkColorScheme),
-        themeMode: ThemeMode.system,
+        themeMode: ThemeMode.light,
         home: PrimaryBody(),
         debugShowCheckedModeBanner: false,
       );
@@ -91,7 +74,7 @@ class _PrimaryBodyState extends State<PrimaryBody> {
     Widget page;
     switch (selectedIndex) {
       case 0:
-        page = AgendaPage(_googleSignIn);
+        page = AgendaPage();
         break;
 
       case 1:
@@ -99,7 +82,7 @@ class _PrimaryBodyState extends State<PrimaryBody> {
         break;
 
       case 2:
-        page = CalendarPage(_googleSignIn);
+        page = CalendarPage();
         break;
 
       case 3:

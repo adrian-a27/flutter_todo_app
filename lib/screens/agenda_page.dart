@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/calendar/v3.dart' as gcal;
+import 'package:provider/provider.dart';
+import '../providers/auth_manager.dart';
 import '../widgets/page_header.dart';
 import '../widgets/task_group.dart';
 import '../widgets/task.dart';
@@ -10,9 +11,6 @@ import '../widgets/event.dart';
 import '../utils/googleapi_calls.dart';
 
 class AgendaPage extends StatefulWidget {
-  AgendaPage(this.googleSignIn);
-  final GoogleSignIn googleSignIn;
-
   @override
   State<AgendaPage> createState() => _AgendaPageState();
 }
@@ -20,23 +18,6 @@ class AgendaPage extends StatefulWidget {
 class _AgendaPageState extends State<AgendaPage> {
   late Future<List<gcal.Event>> _eventList;
 
-  final tempEvents = EventStream(heading: "Today's Event's", events: [
-    Event(
-        calendarName: 'Bluestreaks',
-        eventName: '2019 BAC Holiday Splash',
-        eventTime: 'All Day',
-        eventDescription: 'Description'),
-    Event(
-        calendarName: 'Wayne Valley Events',
-        eventName: 'Jazz Band',
-        eventTime: '6:00 PM - 9:00 PM',
-        eventDescription: 'Description'),
-    Event(
-        calendarName: 'Holidays in United States',
-        eventName: "New Year's Day",
-        eventTime: 'All Day',
-        eventDescription: 'Description')
-  ]);
   @override
   void initState() {
     super.initState();
@@ -44,10 +25,11 @@ class _AgendaPageState extends State<AgendaPage> {
     var now = DateTime.now();
     var yesterday =
         DateTime(now.year, now.month, now.day).subtract(Duration(days: 1));
-    var tomorrow =
-        DateTime(now.year, now.month, now.day).add(Duration(days: 4)); // FIXME: Change date to 1 day
+    var tomorrow = DateTime(now.year, now.month, now.day)
+        .add(Duration(days: 4)); // FIXME: Change date to 1 day
 
-    _eventList = getEvents(widget.googleSignIn, "primary", timeMin: yesterday, timeMax: tomorrow);
+    _eventList = getEvents(context.read<AuthManager>(), "primary",
+        timeMin: yesterday, timeMax: tomorrow);
   }
 
   @override

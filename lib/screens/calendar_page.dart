@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/calendar/v3.dart' as gcal;
+import 'package:provider/provider.dart';
+import '../providers/auth_manager.dart';
 import '../widgets/page_header.dart';
 import '../widgets/event.dart';
 import '../utils/googleapi_calls.dart';
 
 class CalendarPage extends StatefulWidget {
-  CalendarPage(this.googleSignIn);
-  final GoogleSignIn googleSignIn;
-
   @override
   State<CalendarPage> createState() => _CalendarPageState();
 }
@@ -20,7 +18,8 @@ class _CalendarPageState extends State<CalendarPage> {
   void initState() {
     super.initState();
 
-    _eventList = getEvents(widget.googleSignIn, "primary", timeMin: DateTime.now());
+    _eventList = getEvents(context.read<AuthManager>(), "primary",
+        timeMin: DateTime.now());
   }
 
   @override
