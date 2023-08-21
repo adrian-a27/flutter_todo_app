@@ -6,7 +6,7 @@ class EventStream extends StatelessWidget {
   final List<Event> events;
 
   const EventStream({super.key, required this.heading, required this.events});
-
+  // TODO: Create automatic group based on date
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -21,7 +21,12 @@ class EventStream extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineSmall)
           ],
         ),
-        for (Event event in events) event
+        Expanded(
+          child: ListView.builder(
+            itemCount: events.length,
+            itemBuilder: (BuildContext context, int index) => events[index],
+          ),
+        ),
       ],
     );
   }
