@@ -46,7 +46,9 @@ class Event extends StatelessWidget {
     final theme = Theme.of(context);
     // TODO: Handle description viewing
     return Card(
-        color: colorIdMap.containsKey(colorId) ? colorIdMap[colorId]!.harmonizeWith(theme.colorScheme.primary) : theme.colorScheme.surface,
+        color: colorIdMap.containsKey(colorId)
+            ? colorIdMap[colorId]!.harmonizeWith(theme.colorScheme.primary)
+            : theme.colorScheme.surface,
         child: Padding(
           padding:
               const EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 12),
