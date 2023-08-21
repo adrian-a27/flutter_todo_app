@@ -1,40 +1,80 @@
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_adaptive_scaffold/flutter_adaptive_scaffold.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'screens/tasks_page.dart';
 import 'screens/agenda_page.dart';
 import 'screens/calendar_page.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:googleapis/calendar/v3.dart' as calendar;
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
-  runApp(MainApp());
+const List<String> scopes = [calendar.CalendarApi.calendarEventsScope];
+GoogleSignIn _googleSignIn = GoogleSignIn(scopes: scopes);
+
+Future<void> _handleSignIn() async {
+  try {
+    await _googleSignIn.signIn();
+  } catch (error) {
+    print(error);
+  }
 }
 
-class MainApp extends StatelessWidget {
-  MainApp({super.key});
-  final mainColor = Colors.deepPurple;
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  await _handleSignIn();
+  print("Sign in complete.");
+
+  runApp(TodoApp());
+}
+
+class TodoApp extends StatelessWidget {
+  TodoApp({super.key});
+
+  final mainColor = Colors.indigo;
 
   @override
   Widget build(BuildContext context) {
-    var themeLight = ThemeData(
-      useMaterial3: true,
-      fontFamily: GoogleFonts.lexendDeca().fontFamily,
-      colorScheme: ColorScheme.fromSeed(
-          seedColor: mainColor, brightness: Brightness.light),
-    );
-    var themeDark = ThemeData(
-      useMaterial3: true,
-      fontFamily: GoogleFonts.lexendDeca().fontFamily,
-      colorScheme: ColorScheme.fromSeed(
-          seedColor: mainColor, brightness: Brightness.dark),
-    );
+    return DynamicColorBuilder(
+        builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+      ColorScheme lightColorScheme;
+      ColorScheme darkColorScheme;
 
-    return MaterialApp(
-      title: "Todo List",
-      theme: themeLight,
-      darkTheme: themeDark,
-      themeMode: ThemeMode.system,
-      home: PrimaryBody(),
-    );
+      if (lightDynamic != null && darkDynamic != null) {
+        // On Android S+ devices, use the provided dynamic color scheme.
+        // (Recommended) Harmonize the dynamic color scheme' built-in semantic colors.
+        lightColorScheme = lightDynamic.harmonized();
+
+        // Repeat for the dark color scheme.
+        darkColorScheme = darkDynamic.harmonized();
+      } else {
+        // Otherwise, use fallback schemes.
+        lightColorScheme = ColorScheme.fromSeed(
+            seedColor: mainColor, brightness: Brightness.light);
+        darkColorScheme = ColorScheme.fromSeed(
+            seedColor: mainColor, brightness: Brightness.light);
+      }
+
+      return MaterialApp(
+        title: "Todo List",
+        theme: ThemeData(
+            useMaterial3: true,
+            fontFamily: GoogleFonts.lexendDeca().fontFamily,
+            colorScheme: lightColorScheme),
+        darkTheme: ThemeData(
+            useMaterial3: true,
+            fontFamily: GoogleFonts.lexendDeca().fontFamily,
+            colorScheme: darkColorScheme),
+        themeMode: ThemeMode.system,
+        home: PrimaryBody(),
+        debugShowCheckedModeBanner: false,
+      );
+    });
   }
 }
 
@@ -51,7 +91,7 @@ class _PrimaryBodyState extends State<PrimaryBody> {
     Widget page;
     switch (selectedIndex) {
       case 0:
-        page = AgendaPage();
+        page = AgendaPage(_googleSignIn);
         break;
 
       case 1:
@@ -59,7 +99,7 @@ class _PrimaryBodyState extends State<PrimaryBody> {
         break;
 
       case 2:
-        page = CalendarPage();
+        page = CalendarPage(_googleSignIn);
         break;
 
       case 3:
