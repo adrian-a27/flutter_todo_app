@@ -19,10 +19,9 @@ class Event extends StatelessWidget {
       this.colorId});
 
   // TODO: Handle all day events
-  Event.fromGoogleCalendarEvent(gcal.Event event)
-      : calendarName = "CAL_NAME",
-        eventName = event.summary!,
-
+  Event.fromGoogleCalendarEvent(gcal.Event event,
+      {this.calendarName = "CAL_NAME"})
+      : eventName = event.summary!,
         // If dateTime is null, it's an all day event
         eventTime = event.start!.dateTime == null
             ? "All day"
@@ -56,12 +55,17 @@ class Event extends StatelessWidget {
           padding:
               const EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 12),
           child: Column(children: [
-            Row(children: [
-              Text(
-                calendarName,
-                style: theme.textTheme.labelSmall,
-              )
-            ]),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    calendarName,
+                    style: theme.textTheme.labelSmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
             Row(
               children: [
                 Expanded(
