@@ -104,6 +104,7 @@ class _PrimaryBodyState extends State<PrimaryBody> {
             padding: EdgeInsets.all(20),
             color: Theme.of(context).colorScheme.surface,
             child: PageView(
+              physics: NeverScrollableScrollPhysics(),
               controller: controller,
               children: pages,
               onPageChanged: (index) {
