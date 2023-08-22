@@ -22,8 +22,11 @@ class Event extends StatelessWidget {
   Event.fromGoogleCalendarEvent(gcal.Event event)
       : calendarName = "CAL_NAME",
         eventName = event.summary!,
-        eventTime =
-            "${DateFormat.jm().format(DateTime.now())} - ${DateFormat.jm().format(DateTime.now())}",
+
+        // If dateTime is null, it's an all day event
+        eventTime = event.start!.dateTime == null
+            ? "All day"
+            : "${DateFormat.jm().format(event.start!.dateTime!.toLocal())} - ${DateFormat.jm().format(event.end!.dateTime!.toLocal())}",
         eventDescription = event.description,
         colorId = event.colorId;
 
