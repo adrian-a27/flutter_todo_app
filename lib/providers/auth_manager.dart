@@ -5,7 +5,10 @@ import 'package:googleapis/calendar/v3.dart' as gcal;
 import '../firebase_options.dart';
 
 class AuthManager {
-  static final List<String> _scopes = [gcal.CalendarApi.calendarEventsScope];
+  static final List<String> _scopes = [
+    gcal.CalendarApi.calendarEventsScope,
+    gcal.CalendarApi.calendarReadonlyScope
+  ];
   final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: _scopes);
   gcal.CalendarApi? _calendarApi;
 
