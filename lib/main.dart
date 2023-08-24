@@ -53,7 +53,7 @@ class TodoApp extends StatelessWidget {
             useMaterial3: true,
             fontFamily: GoogleFonts.lexendDeca().fontFamily,
             colorScheme: darkColorScheme),
-        home: PrimaryBody(selectedIndex: 0),
+        home: PrimaryBody(selectedIndex: 1),
         debugShowCheckedModeBanner: false,
       );
     });
