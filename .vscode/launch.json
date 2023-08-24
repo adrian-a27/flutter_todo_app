@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug 5000",
+            "request": "launch",
+            "type": "dart",
+            "args": [
+                "-d",
+                "edge",
+                "--web-port",
+                "5000"
+            ],
+        }
+    ],
+}
