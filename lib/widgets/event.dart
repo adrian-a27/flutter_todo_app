@@ -9,8 +9,9 @@ class Event extends StatelessWidget {
   final String eventTime; // TODO: Should I make this a time type?
   final String? eventDescription;
   final String? colorId;
+  Color? color;
 
-  const Event(
+  Event(
       {super.key,
       required this.calendarName,
       required this.eventName,
@@ -20,7 +21,7 @@ class Event extends StatelessWidget {
 
   // TODO: Handle all day events
   Event.fromGoogleCalendarEvent(gcal.Event event,
-      {this.calendarName = "CAL_NAME"})
+      {this.calendarName = "CAL_NAME", this.color})
       : eventName = event.summary!,
         // If dateTime is null, it's an all day event
         eventTime = event.start!.dateTime == null
@@ -46,46 +47,54 @@ class Event extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final newColorScheme = ColorScheme.fromSeed(
+        seedColor: color != null
+            ? (colorId != null ? colorIdMap[colorId] : color)!
+                .harmonizeWith(theme.colorScheme.primary)
+            : theme.colorScheme.primary,
+        brightness: theme.brightness);
+
     // TODO: Handle description viewing
     return Card(
-        color: colorIdMap.containsKey(colorId)
-            ? colorIdMap[colorId]!.harmonizeWith(theme.colorScheme.primary)
-            : theme.colorScheme.surface,
-        child: Padding(
-          padding:
-              const EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 12),
-          child: Column(children: [
-            Row(
-              children: [
-                Expanded(
+      color: newColorScheme.primaryContainer,
+      child: Padding(
+        padding:
+            const EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 12),
+        child: Column(children: [
+          Row(
+            children: [
+              Expanded(
                   child: Text(
-                    calendarName,
-                    style: theme.textTheme.labelSmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                calendarName,
+                style: theme.textTheme.labelSmall!
+                    .copyWith(color: newColorScheme.onPrimaryContainer),
+                overflow: TextOverflow.ellipsis,
+              )),
+            ],
+          ),
+          Row(
+            children: [
+              Expanded(
+                  child: Text(
+                eventName,
+                style: theme.textTheme.bodyLarge!.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: newColorScheme.onPrimaryContainer),
+                overflow: TextOverflow.ellipsis,
+              )),
+              Padding(
+                padding: const EdgeInsets.only(left: 20.0),
+                child: Text(
+                  eventTime,
+                  style: theme.textTheme.bodyLarge!.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: newColorScheme.onPrimaryContainer),
                 ),
-              ],
-            ),
-            Row(
-              children: [
-                Expanded(
-                    child: Text(
-                  eventName,
-                  style: theme.textTheme.bodyLarge!
-                      .copyWith(fontWeight: FontWeight.bold),
-                  overflow: TextOverflow.ellipsis,
-                )),
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0),
-                  child: Text(
-                    eventTime,
-                    style: theme.textTheme.bodyLarge!
-                        .copyWith(fontWeight: FontWeight.bold),
-                  ),
-                )
-              ],
-            ),
-          ]),
-        ));
+              )
+            ],
+          ),
+        ]),
+      ),
+    );
   }
 }
