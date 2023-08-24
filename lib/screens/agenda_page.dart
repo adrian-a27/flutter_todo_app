@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:googleapis/calendar/v3.dart' as gcal;
 import 'package:provider/provider.dart';
 import '../providers/auth_manager.dart';
 import '../widgets/page_header.dart';
 import '../widgets/task_group.dart';
 import '../widgets/task.dart';
 import '../widgets/event_stream.dart';
-import '../widgets/event.dart';
 import '../utils/googleapi_calls.dart';
 
 class AgendaPage extends StatefulWidget {
@@ -17,7 +15,7 @@ class AgendaPage extends StatefulWidget {
 
 class _AgendaPageState extends State<AgendaPage>
     with AutomaticKeepAliveClientMixin {
-  late Future<List<gcal.Event>> _eventList;
+  late Future<EventStream> _todaysEvents;
 
   @override
   bool get wantKeepAlive => true;
@@ -26,14 +24,28 @@ class _AgendaPageState extends State<AgendaPage>
   void initState() {
     super.initState();
 
-    var now = DateTime.now();
-    var yesterday =
-        DateTime(now.year, now.month, now.day).subtract(Duration(days: 1));
-    var tomorrow = DateTime(now.year, now.month, now.day)
-        .add(Duration(days: 4)); // FIXME: Change date to 1 day
+    _todaysEvents = getTodaysEvents(context);
+  }
 
-    _eventList = getEvents(context.read<AuthManager>(), "primary",
-        timeMin: yesterday, timeMax: tomorrow);
+  Future<EventStream> getTodaysEvents(BuildContext context) {
+    var now = DateTime.now();
+    var startOfDay = DateTime(now.year, now.month, now.day);
+    var endOfDay = DateTime(now.year, now.month, now.day)
+        .add(Duration(days: 1))
+        .subtract(Duration(milliseconds: 1));
+    print(startOfDay);
+    print(endOfDay);
+
+    return getEvents(context.read<AuthManager>(),
+            timeMin: startOfDay.toUtc(), timeMax: endOfDay.toUtc())
+        .then((List<EventStream> groups) {
+      for (EventStream eventStream in groups) {
+        if (eventStream.heading == DateFormat.MMMMd().format(startOfDay)) {
+          return eventStream;
+        }
+      }
+      throw ErrorDescription("No events found for today!");
+    });
   }
 
   @override
@@ -53,19 +65,18 @@ class _AgendaPageState extends State<AgendaPage>
         ]),
         Expanded(
           child: FutureBuilder(
-            future: _eventList,
-            builder: (BuildContext context,
-                AsyncSnapshot<List<gcal.Event>> snapshot) {
+            future: _todaysEvents,
+            builder:
+                (BuildContext context, AsyncSnapshot<EventStream> snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 if (snapshot.hasError) {
                   // TODO: Put in a proper error screen
                   return ErrorWidget(snapshot.error!);
                 }
 
-                return EventStream(heading: "Today's Event's", events: [
-                  for (var event in snapshot.data!)
-                    Event.fromGoogleCalendarEvent(event)
-                ]);
+                print(snapshot.data!.heading);
+                snapshot.data!.heading = "Today's Events";
+                return snapshot.data!;
               } else {
                 return Container(
                   alignment: Alignment.center,
