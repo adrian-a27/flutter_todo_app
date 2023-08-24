@@ -53,7 +53,7 @@ class TodoApp extends StatelessWidget {
             useMaterial3: true,
             fontFamily: GoogleFonts.lexendDeca().fontFamily,
             colorScheme: darkColorScheme),
-        home: PrimaryBody(),
+        home: PrimaryBody(selectedIndex: 0),
         debugShowCheckedModeBanner: false,
       );
     });
@@ -61,14 +61,22 @@ class TodoApp extends StatelessWidget {
 }
 
 class PrimaryBody extends StatefulWidget {
+  PrimaryBody({super.key, required this.selectedIndex});
+  int selectedIndex;
+
   @override
   State<PrimaryBody> createState() => _PrimaryBodyState();
 }
 
 class _PrimaryBodyState extends State<PrimaryBody> {
-  int selectedIndex = 1;
-  final PageController controller = PageController(initialPage: 1);
   final pages = [AgendaPage(), TasksPage(), CalendarPage(), Placeholder()];
+  late PageController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = PageController(initialPage: widget.selectedIndex);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,10 +102,10 @@ class _PrimaryBodyState extends State<PrimaryBody> {
       onSelectedIndexChange: (index) {
         controller.jumpToPage(index);
         setState(() {
-          selectedIndex = index;
+          widget.selectedIndex = index;
         });
       },
-      selectedIndex: selectedIndex,
+      selectedIndex: widget.selectedIndex,
       internalAnimations: false,
       body: (_) => SafeArea(
         child: Container(
@@ -108,7 +116,7 @@ class _PrimaryBodyState extends State<PrimaryBody> {
               controller: controller,
               children: pages,
               onPageChanged: (index) {
-                selectedIndex = index;
+                widget.selectedIndex = index;
               },
             )),
       ),
