@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_manager.dart';
+import '../providers/google_api_controller.dart';
 import '../widgets/page_header.dart';
 import '../widgets/task_group.dart';
 import '../widgets/task.dart';
+import '../widgets/event.dart';
 import '../widgets/event_stream.dart';
-import '../utils/googleapi_calls.dart';
 
 class AgendaPage extends StatefulWidget {
   @override
@@ -27,7 +28,7 @@ class _AgendaPageState extends State<AgendaPage>
     _todaysEvents = getTodaysEvents(context);
   }
 
-  Future<EventStream> getTodaysEvents(BuildContext context) {
+  Future<EventStream> getTodaysEvents(BuildContext context) async {
     var now = DateTime.now();
     var startOfDay = DateTime(now.year, now.month, now.day);
     var endOfDay = DateTime(now.year, now.month, now.day)
@@ -36,16 +37,19 @@ class _AgendaPageState extends State<AgendaPage>
     print(startOfDay);
     print(endOfDay);
 
-    return getEvents(context.read<AuthManager>(),
-            timeMin: startOfDay.toUtc(), timeMax: endOfDay.toUtc())
-        .then((List<EventStream> groups) {
-      for (EventStream eventStream in groups) {
-        if (eventStream.heading == DateFormat.MMMMd().format(startOfDay)) {
-          return eventStream;
-        }
+    List<EventStream> groups = EventStream.fromGoogleCalendarEvents(
+        await context.read<AuthManager>().googleApiController.then(
+            (GoogleApiController googleApiController) =>
+                googleApiController.getEvents(
+                    timeMin: startOfDay.toUtc(), timeMax: endOfDay.toUtc())));
+
+    for (EventStream eventStream in groups) {
+      if (eventStream.heading == DateFormat.MMMMd().format(startOfDay)) {
+        return eventStream;
       }
-      throw ErrorDescription("No events found for today!");
-    });
+    }
+
+    throw ErrorDescription("No events found for today!");
   }
 
   @override
@@ -73,7 +77,7 @@ class _AgendaPageState extends State<AgendaPage>
                   // TODO: Put in a proper error screen
                   print(snapshot.error!);
                   return ErrorWidget(ErrorDescription(
-                      "Something went wrong creating the CalendarPage!"));
+                      "Something went wrong creating the AgendaPage!"));
                 }
 
                 print(snapshot.data!.heading);

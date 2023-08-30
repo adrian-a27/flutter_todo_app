@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_manager.dart';
+import '../providers/google_api_controller.dart';
 import '../widgets/page_header.dart';
+import '../widgets/event.dart';
 import '../widgets/event_stream.dart';
-import '../utils/googleapi_calls.dart';
 
 class CalendarPage extends StatefulWidget {
   @override
@@ -21,8 +22,11 @@ class _CalendarPageState extends State<CalendarPage>
   void initState() {
     super.initState();
 
-    _eventList =
-        getEvents(context.read<AuthManager>(), timeMin: DateTime.now());
+    _eventList = context.read<AuthManager>().googleApiController.then(
+        (GoogleApiController googleApiController) => googleApiController
+            .getEvents(timeMin: DateTime.now())
+            .then((Map<DateTime, List<Event>> groups) =>
+                EventStream.fromGoogleCalendarEvents(groups)));
   }
 
   @override
