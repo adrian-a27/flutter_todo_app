@@ -22,6 +22,21 @@ class EventStream extends StatelessWidget {
         : DateFormat.yMMMMd('en_US').format(date!.toLocal());
   }
 
+  static List<EventStream> fromGoogleCalendarEvents(
+      Map<DateTime, List<Event>> groups) {
+    // Make the EventStream for each group
+    List<EventStream> eventGroups = [
+      for (MapEntry<DateTime, List<Event>> group in groups.entries)
+        EventStream.withDate(date: group.key, events: group.value)
+    ];
+
+    // Sort the groups so the stream is ordered on the page
+    eventGroups.sort((group1, group2) => group1.date!.compareTo(group2.date!));
+    print("Events sorted!");
+
+    return eventGroups;
+  }
+
   // TODO: Create automatic group based on date
   @override
   Widget build(BuildContext context) {
