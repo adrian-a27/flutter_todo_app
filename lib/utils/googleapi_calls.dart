@@ -1,8 +1,7 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:googleapis/calendar/v3.dart' as gcal;
-import 'package:todo_app/providers/auth_manager.dart';
+import '../providers/auth_manager.dart';
 import '../widgets/event.dart';
 import '../widgets/event_stream.dart';
 
@@ -12,7 +11,10 @@ Future<List<EventStream>> getEvents(AuthManager authManager,
     {DateTime? timeMin, DateTime? timeMax}) async {
   print("getEvents called");
 
-  gcal.CalendarApi calendarApi = await authManager.calendarApi;
+  gcal.CalendarApi calendarApi = await authManager.googleApiController.then(
+      (googleApiController) async => await googleApiController.calendarApi);
+
+  print("here!");
 
   // List to hold all the get request futures
   List<Future<List<(gcal.Event, String)>>> getEventFutures = [];
