@@ -21,8 +21,8 @@ class _CalendarPageState extends State<CalendarPage>
   void initState() {
     super.initState();
 
-    _eventList = getEvents(context.read<AuthManager>(),
-        timeMin: DateTime.now());
+    _eventList =
+        getEvents(context.read<AuthManager>(), timeMin: DateTime.now());
   }
 
   @override
@@ -40,7 +40,9 @@ class _CalendarPageState extends State<CalendarPage>
               if (snapshot.connectionState == ConnectionState.done) {
                 if (snapshot.hasError) {
                   // TODO: Put in a proper error screen
-                  return ErrorWidget(snapshot.error!);
+                  print(snapshot.error!);
+                  return ErrorWidget(ErrorDescription(
+                      "Something went wrong creating the CalendarPage!"));
                 }
 
                 return ListView.builder(

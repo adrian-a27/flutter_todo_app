@@ -71,7 +71,9 @@ class _AgendaPageState extends State<AgendaPage>
               if (snapshot.connectionState == ConnectionState.done) {
                 if (snapshot.hasError) {
                   // TODO: Put in a proper error screen
-                  return ErrorWidget(snapshot.error!);
+                  print(snapshot.error!);
+                  return ErrorWidget(ErrorDescription(
+                      "Something went wrong creating the CalendarPage!"));
                 }
 
                 print(snapshot.data!.heading);
