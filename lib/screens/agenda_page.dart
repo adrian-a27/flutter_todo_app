@@ -6,7 +6,6 @@ import '../providers/google_api_controller.dart';
 import '../widgets/page_header.dart';
 import '../widgets/task_group.dart';
 import '../widgets/task.dart';
-import '../widgets/event.dart';
 import '../widgets/event_stream.dart';
 
 class AgendaPage extends StatefulWidget {
