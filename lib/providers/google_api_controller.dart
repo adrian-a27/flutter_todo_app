@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/calendar/v3.dart' as gcal;
+import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/event.dart';
 
 class GoogleApiController {
@@ -11,6 +12,9 @@ class GoogleApiController {
   ];
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: _scopes);
+  late GoogleSignInAccount? _googleUser;
+  UserCredential? _userCredential;
+  late Future<UserCredential> _userCredentialFuture;
   gcal.CalendarApi? _calendarApi;
 
   /*
@@ -20,16 +24,33 @@ class GoogleApiController {
   GoogleApiController._create();
 
   static Future<GoogleApiController> create() async {
-    GoogleApiController newGoogleApiController = GoogleApiController._create();
-    await newGoogleApiController._signInWithGoogle();
-    return newGoogleApiController;
+    GoogleApiController googleApiController = GoogleApiController._create();
+
+    // Trigger the authentication flow
+    await googleApiController._signInWithGoogle();
+
+    // Obtain the auth details from the request
+    final GoogleSignInAuthentication? googleAuth =
+        await googleApiController._googleUser?.authentication;
+
+    // Create a new credential
+    final OAuthCredential credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth?.accessToken,
+      idToken: googleAuth?.idToken,
+    );
+
+    googleApiController._userCredentialFuture =
+        FirebaseAuth.instance.signInWithCredential(credential);
+
+    return googleApiController;
   }
 
   Future<void> _signInWithGoogle() async {
-    if (await _googleSignIn.signInSilently() == null) {
+    _googleUser = await _googleSignIn.signInSilently();
+    if (_googleUser == null) {
       try {
         // FIXME: This isn't good practice on the web, need to use renderButton
-        await _googleSignIn.signIn();
+        _googleUser = await _googleSignIn.signIn();
       } catch (error) {
         print(error);
       }
@@ -44,6 +65,13 @@ class GoogleApiController {
     }
   }
 
+  Future<UserCredential> get userCredential async {
+    // Derives the userCredential from the GoogleApiController
+    _userCredential ??= await _userCredentialFuture;
+    print("USER_CRED: $_userCredential");
+    return _userCredential!;
+  }
+  
   /*
     Calendar functions
   */
@@ -58,6 +86,54 @@ class GoogleApiController {
     }
 
     return _calendarApi!;
+  }
+
+  Future<(List<(gcal.Event, String)>, Map<String, String>, Map<String, Color>)>
+      getAllEvents() async {
+    // Only need events from now onwards
+    print("getAllEvents called for ${_googleSignIn.currentUser!.email}");
+
+    // List to hold all the get event futures
+    List<Future<List<(gcal.Event, String)>>> getEventFutures = [];
+
+    // Map of calendarID to backgroundColor
+    Map<String, Color> calendarIDToColorMapping = {};
+    // Map of calendarID to name
+    Map<String, String> calendarIDToNameMapping = {};
+
+    List<gcal.CalendarListEntry> calListItems = await (await calendarApi)
+        .calendarList
+        .list()
+        .then((gcal.CalendarList calList) => calList.items!);
+
+    // Create a mapping of calendarID to name and calendarID to color
+    // and await it because it sets up the get events futures
+    for (gcal.CalendarListEntry cal in calListItems) {
+      var colorString = "ff${cal.backgroundColor!.replaceAll('#', '')}";
+
+      // Fill in mappings
+      calendarIDToColorMapping[cal.id!] =
+          Color(int.parse(colorString, radix: 16));
+      calendarIDToNameMapping[cal.id!] = cal.summary!;
+
+      // Set up event retrievals
+      getEventFutures.add((await calendarApi)
+          .events
+          .list(cal.id!, timeMin: DateTime.now(), singleEvents: true)
+          .then((gcal.Events events) {
+        // Return each event mapped to the calendarID of its calendar
+        return [for (gcal.Event event in events.items!) (event, cal.id ?? "")];
+      }));
+    }
+
+    // Combine all get event futures into one future
+    List<(gcal.Event, String)> eventList =
+        await Future.wait<List<(gcal.Event, String)>>(getEventFutures).then(
+            (value) => value
+                .expand((List<(gcal.Event, String)> eventList) => eventList)
+                .toList());
+
+    return (eventList, calendarIDToNameMapping, calendarIDToColorMapping);
   }
 
   // TODO: Handle potential error for this call

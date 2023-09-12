@@ -12,6 +12,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final authManager = await AuthManager.create();
+  (await authManager.firestoreManager)
+      .backgroundRefreshEvents(await authManager.googleApiController);
 
   runApp(Provider.value(
     value: authManager,
