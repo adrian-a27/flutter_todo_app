@@ -8,6 +8,8 @@ import '../widgets/task_group.dart';
 import '../widgets/task.dart';
 import '../widgets/event_stream.dart';
 
+const noEventsTodayStr = "No events found for today!";
+
 class AgendaPage extends StatefulWidget {
   @override
   State<AgendaPage> createState() => _AgendaPageState();
@@ -48,7 +50,7 @@ class _AgendaPageState extends State<AgendaPage>
       }
     }
 
-    throw ErrorDescription("No events found for today!");
+    throw ErrorDescription(noEventsTodayStr);
   }
 
   @override
@@ -70,15 +72,18 @@ class _AgendaPageState extends State<AgendaPage>
           child: FutureBuilder(
             future: _todaysEvents,
             builder:
-                (BuildContext context, AsyncSnapshot<EventStream> snapshot) {
+                (BuildContext context, AsyncSnapshot<EventStream> snapshot) { 
               if (snapshot.connectionState == ConnectionState.done) {
                 if (snapshot.hasError) {
-                  // TODO: Put in a proper error screen
-                  print(snapshot.error!);
-                  return ErrorWidget(ErrorDescription(
-                      "Something went wrong creating the AgendaPage!"));
+                  if (snapshot.error!.toString() == noEventsTodayStr) {
+                    return Center(child: Text("No events found for today!"));
+                  } else {
+                    // TODO: Put in a proper error screen
+                    print(snapshot.error!);
+                    return ErrorWidget(ErrorDescription(
+                        "Something went wrong creating the AgendaPage!: ${snapshot.error}"));
+                  }
                 }
-
                 print(snapshot.data!.heading);
                 snapshot.data!.heading = "Today's Events";
                 return snapshot.data!;
