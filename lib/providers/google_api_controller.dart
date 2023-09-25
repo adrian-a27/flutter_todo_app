@@ -3,7 +3,8 @@ import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sig
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/calendar/v3.dart' as gcal;
 import 'package:firebase_auth/firebase_auth.dart';
-import '../widgets/event.dart';
+import '../widgets/event_widget.dart';
+import '../models/event.dart';
 
 class GoogleApiController {
   static final List<String> _scopes = [
@@ -33,6 +34,9 @@ class GoogleApiController {
     final GoogleSignInAuthentication? googleAuth =
         await googleApiController._googleUser?.authentication;
 
+    print(googleAuth?.accessToken ?? "No accessToken");
+    print(googleAuth?.idToken ?? "No idToken");
+
     // Create a new credential
     final OAuthCredential credential = GoogleAuthProvider.credential(
       accessToken: googleAuth?.accessToken,
@@ -48,12 +52,9 @@ class GoogleApiController {
   Future<void> _signInWithGoogle() async {
     _googleUser = await _googleSignIn.signInSilently();
     if (_googleUser == null) {
-      try {
-        // FIXME: This isn't good practice on the web, need to use renderButton
-        _googleUser = await _googleSignIn.signIn();
-      } catch (error) {
-        print(error);
-      }
+      // FIXME: This isn't good practice on the web, need to use renderButton
+      _googleUser = await _googleSignIn.signIn();
+
       print("Sign in complete.");
     } else {
       // Use the cached access token to check if we have access to the scopes
@@ -71,7 +72,7 @@ class GoogleApiController {
     print("USER_CRED: $_userCredential");
     return _userCredential!;
   }
-  
+
   /*
     Calendar functions
   */
@@ -88,136 +89,127 @@ class GoogleApiController {
     return _calendarApi!;
   }
 
-  Future<(List<(gcal.Event, String)>, Map<String, String>, Map<String, Color>)>
-      getAllEvents() async {
+  Future<List<Event>> getAllEvents() async {
     // Only need events from now onwards
     print("getAllEvents called for ${_googleSignIn.currentUser!.email}");
 
     // List to hold all the get event futures
-    List<Future<List<(gcal.Event, String)>>> getEventFutures = [];
-
-    // Map of calendarID to backgroundColor
-    Map<String, Color> calendarIDToColorMapping = {};
-    // Map of calendarID to name
-    Map<String, String> calendarIDToNameMapping = {};
+    List<Future<List<Event>>> getEventFutures = [];
 
     List<gcal.CalendarListEntry> calListItems = await (await calendarApi)
         .calendarList
         .list()
         .then((gcal.CalendarList calList) => calList.items!);
 
-    // Create a mapping of calendarID to name and calendarID to color
-    // and await it because it sets up the get events futures
+    // Set up the get events futures
     for (gcal.CalendarListEntry cal in calListItems) {
       var colorString = "ff${cal.backgroundColor!.replaceAll('#', '')}";
-
-      // Fill in mappings
-      calendarIDToColorMapping[cal.id!] =
-          Color(int.parse(colorString, radix: 16));
-      calendarIDToNameMapping[cal.id!] = cal.summary!;
 
       // Set up event retrievals
       getEventFutures.add((await calendarApi)
           .events
           .list(cal.id!, timeMin: DateTime.now(), singleEvents: true)
           .then((gcal.Events events) {
-        // Return each event mapped to the calendarID of its calendar
-        return [for (gcal.Event event in events.items!) (event, cal.id ?? "")];
+        List<Event> eventList = [
+          for (gcal.Event event in events.items!)
+            Event.fromGoogleCalendarEvent(event)
+        ];
+
+        for (Event event in eventList) {
+          event.calendarName = cal.summary!;
+          event.eventColor = Color(int.parse(colorString, radix: 16));
+        }
+
+        return eventList;
       }));
     }
 
     // Combine all get event futures into one future
-    List<(gcal.Event, String)> eventList =
-        await Future.wait<List<(gcal.Event, String)>>(getEventFutures).then(
-            (value) => value
-                .expand((List<(gcal.Event, String)> eventList) => eventList)
-                .toList());
+    List<Event> eventList = await Future.wait<List<Event>>(getEventFutures)
+        .then((List<List<Event>> value) =>
+            value.expand((List<Event> eventList) => eventList).toList());
 
-    return (eventList, calendarIDToNameMapping, calendarIDToColorMapping);
+    return eventList;
   }
 
   // TODO: Handle potential error for this call
   // TODO: Add pagnation??
-  Future<Map<DateTime, List<Event>>> getEvents(
+  Future<Map<DateTime, List<EventWidget>>> getEvents(
       {DateTime? timeMin, DateTime? timeMax}) async {
     print("getEvents called for ${_googleSignIn.currentUser!.email}");
 
     // List to hold all the get event futures
-    List<Future<List<(gcal.Event, String)>>> getEventFutures = [];
-
-    // Map of calendarID to backgroundColor
-    Map<String, Color> calendarIDToColorMapping = {};
-    // Map of calendarID to name
-    Map<String, String> calendarIDToNameMapping = {};
+    List<Future<List<Event>>> getEventFutures = [];
 
     List<gcal.CalendarListEntry> calListItems = await (await calendarApi)
         .calendarList
         .list()
         .then((gcal.CalendarList calList) => calList.items!);
 
-    // Create a mapping of calendarID to name and calendarID to color
-    // and await it because it sets up the get events futures
+    // Set up the get events futures
     for (gcal.CalendarListEntry cal in calListItems) {
       var colorString = "ff${cal.backgroundColor!.replaceAll('#', '')}";
-
-      // Fill in mappings
-      calendarIDToColorMapping[cal.id!] =
-          Color(int.parse(colorString, radix: 16));
-      calendarIDToNameMapping[cal.id!] = cal.summary!;
 
       // Set up event retrievals
       getEventFutures.add((await calendarApi)
           .events
-          .list(cal.id!, timeMin: timeMin, timeMax: timeMax, singleEvents: true)
+          .list(cal.id!, timeMin: DateTime.now(), singleEvents: true)
           .then((gcal.Events events) {
-        // Return each event mapped to the calendarID of its calendar
-        return [for (gcal.Event event in events.items!) (event, cal.id ?? "")];
+        List<Event> eventList = [
+          for (gcal.Event event in events.items!)
+            Event.fromGoogleCalendarEvent(event)
+        ];
+
+        for (Event event in eventList) {
+          event.calendarName = cal.summary!;
+          event.eventColor = Color(int.parse(colorString, radix: 16));
+        }
+
+        return eventList;
       }));
     }
 
     // Combine all get event futures into one future
-    List<(gcal.Event, String)> eventList =
-        await Future.wait<List<(gcal.Event, String)>>(getEventFutures).then(
-            (value) => value
-                .expand((List<(gcal.Event, String)> eventList) => eventList)
-                .toList());
+    List<Event> eventList = await Future.wait<List<Event>>(getEventFutures)
+        .then((List<List<Event>> value) =>
+            value.expand((List<Event> eventList) => eventList).toList());
 
     // Group each event into a list of other events that happen that day
-    final Map<DateTime, List<Event>> groups = _convertGCalEventListToMap(
-        eventList, calendarIDToNameMapping, calendarIDToColorMapping);
+    final Map<DateTime, List<EventWidget>> groups = _groupByDate(eventList);
 
     return groups;
   }
 
-  Map<DateTime, List<Event>> _convertGCalEventListToMap(
-      List<(gcal.Event, String)> eventList,
-      Map<String, String> calendarIDToNameMapping,
-      Map<String, Color> calendarIDToColorMapping) {
+  Map<DateTime, List<EventWidget>> _groupByDate(List<Event> eventList) {
     // Map to be returned
     Map<DateTime, List<Event>> groups = {};
 
-    for (var (event, eventCalID) in eventList) {
-      // Ex from the API: "it is not valid to specify start.date and end.dateTime"
-      if (event.start!.dateTime == null && event.start!.date == null) {
-        throw ErrorDescription(
-            "ERROR: A Google Calendar event must either have date or dateTime as non-null");
-      }
+    for (Event event in eventList) {
+      DateTime eventStartDate = event.start.toLocal();
+      DateTime date = DateTime(
+          eventStartDate.year, eventStartDate.month, eventStartDate.day);
 
-      // Either dateTime or date is non-null
-      DateTime date = event.start!.dateTime ?? event.start!.date!;
-
-      // Create event widget, but use the mapping to get the proper name.
-      Event eventWidget = Event.fromGoogleCalendarEvent(event,
-          calendarName: calendarIDToNameMapping[eventCalID] ?? "CAL_NAME",
-          color: calendarIDToColorMapping[eventCalID]);
+      // // Create event widget, but use the mapping to get the proper name.
+      // EventWidget eventWidget = EventWidget(event);
 
       if (groups.containsKey(date)) {
-        groups[date]!.add(eventWidget);
+        groups[date]!.add(event);
       } else {
-        groups[date] = [eventWidget];
+        groups[date] = [event];
       }
     }
 
-    return groups;
+    groups.forEach(
+        (key, value) => value.sort((a, b) => a.start.compareTo(b.start)));
+
+    Map<DateTime, List<EventWidget>> widgetGroups = {};
+
+    for (var entry in groups.entries) {
+      List<EventWidget> newValue =
+          entry.value.map((Event event) => EventWidget(event)).toList();
+      widgetGroups[entry.key] = newValue;
+    }
+
+    return widgetGroups;
   }
 }

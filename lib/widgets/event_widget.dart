@@ -2,25 +2,36 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:googleapis/calendar/v3.dart' as gcal;
 import 'package:intl/intl.dart';
+import '../models/event.dart';
 
-class Event extends StatelessWidget {
-  final String calendarName;
+class EventWidget extends StatelessWidget {
   final String eventName;
   final String eventTime; // TODO: Should I make this a time type?
   final String? eventDescription;
+  final String calendarName;
   final String? colorId;
   Color? color;
 
-  Event(
-      {super.key,
-      required this.calendarName,
-      required this.eventName,
-      required this.eventTime,
-      this.eventDescription,
-      this.colorId});
+  // EventWidget(
+  //     {super.key,
+  //     required this.calendarName,
+  //     required this.eventName,
+  //     required this.eventTime,
+  //     this.eventDescription,
+  //     this.colorId});
+
+  EventWidget(Event event)
+      : eventName = event.name,
+        eventTime = event.isAllDay
+            ? "All day"
+            : "${DateFormat.jm().format(event.start.toLocal())} - ${DateFormat.jm().format(event.end.toLocal())}",
+        eventDescription = event.description,
+        calendarName = event.calendarName,
+        color = event.eventColor,
+        colorId = event.googleCalendarColorId;
 
   // TODO: Handle all day events
-  Event.fromGoogleCalendarEvent(gcal.Event event,
+  EventWidget.fromGoogleCalendarEvent(gcal.Event event,
       {this.calendarName = "CAL_NAME", this.color})
       : eventName = event.summary!,
         // If dateTime is null, it's an all day event

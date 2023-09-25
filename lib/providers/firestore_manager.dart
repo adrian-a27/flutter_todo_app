@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import './google_api_controller.dart';
+import '../models/event.dart';
 
 class FirestoreManager {
   bool _isRefreshing = false;
@@ -23,42 +23,23 @@ class FirestoreManager {
     return firestoreManager;
   }
 
+
   Future<void> backgroundRefreshEvents(
       GoogleApiController googleApiController) async {
     print(
         "backgroundRefreshEvents called for ${(await googleApiController.userCredential).user!.email}");
 
+    // TODO: Read snapshots and store entire snapshots, not straight from firestore
     _isRefreshing = true;
 
-    CollectionReference events =
-        _userDocumentRef.collection('events'); // TODO: Make this user specific
-    var (
-      eventList,
-      Map<String, String> calendarIDToNameMapping,
-      Map<String, Color> calendarIDToColorMapping
-    ) = await googleApiController.getAllEvents();
+    CollectionReference events = _userDocumentRef.collection('events');
+
+    List<Event> eventList = await googleApiController.getAllEvents();
 
     print("storing events");
-    for (var (event, calID) in eventList) {
-      // TODO: Create event data model instead of raw GCal event
-      print(event.summary);
-      bool isAllDay = event.start!.dateTime == null;
-
-      // If event is all day, you should not convert date to local time
-      events.doc(event.iCalUID).set({
-        'event_name': event.summary!,
-        'isAllDay': isAllDay,
-
-        'event_time_start': isAllDay
-            ? event.start!.date!.toUtc()
-            : event.start!.dateTime!.toUtc(),
-        
-        'event_time_end':
-            isAllDay ? event.end!.date!.toUtc() : event.end!.dateTime!.toUtc(),
-        'event_description': event.description,
-        'calendar_name': calendarIDToNameMapping[calID],
-        'calendar_color': calendarIDToColorMapping[calID]!.value
-      });
+    for (Event event in eventList) {
+      print(event.name);
+      events.doc(event.id).set(event.toMap());
     }
 
     _isRefreshing = false;

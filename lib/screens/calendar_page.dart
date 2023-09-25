@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_manager.dart';
 import '../providers/google_api_controller.dart';
 import '../widgets/page_header.dart';
-import '../widgets/event.dart';
+import '../widgets/event_widget.dart';
 import '../widgets/event_stream.dart';
 
 class CalendarPage extends StatefulWidget {
@@ -25,7 +25,7 @@ class _CalendarPageState extends State<CalendarPage>
     _eventList = context.read<AuthManager>().googleApiController.then(
         (GoogleApiController googleApiController) => googleApiController
             .getEvents(timeMin: DateTime.now())
-            .then((Map<DateTime, List<Event>> groups) =>
+            .then((Map<DateTime, List<EventWidget>> groups) =>
                 EventStream.fromGoogleCalendarEvents(groups)));
   }
 

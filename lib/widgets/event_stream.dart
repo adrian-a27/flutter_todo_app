@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'event.dart';
+import 'event_widget.dart';
 
 class EventStream extends StatelessWidget {
   late String heading;
-  final List<Event> events;
+  final List<EventWidget> events;
   final DateTime? date;
   bool scrollable;
 
@@ -23,10 +23,10 @@ class EventStream extends StatelessWidget {
   }
 
   static List<EventStream> fromGoogleCalendarEvents(
-      Map<DateTime, List<Event>> groups) {
+      Map<DateTime, List<EventWidget>> groups) {
     // Make the EventStream for each group
     List<EventStream> eventGroups = [
-      for (MapEntry<DateTime, List<Event>> group in groups.entries)
+      for (MapEntry<DateTime, List<EventWidget>> group in groups.entries)
         EventStream.withDate(date: group.key, events: group.value)
     ];
 
